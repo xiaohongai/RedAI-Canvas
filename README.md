@@ -103,6 +103,7 @@
 | **APImart**          | 大语言模型,图像生成，前往 [APImart.ai](https://apimart.ai/zh/register?aff=ashuoai) 获取 Key     |
 | **派欧云 (PPIO)（准备下架）** | 大语言模型,图片生成，前往 [ppio.com](https://ppio.com/user/register?invited_by=SF4VL3) 获取 Key |
 | **GRSAI**            | 大语言模型,图像生成，前往 [grsai.com](https://grsai.com/zh/dashboard/user-info) 获取 Key        |
+| **英伟达 NVIDIA NIM** | 大语言模型（OpenAI 兼容），前往 [build.nvidia.com](https://build.nvidia.com/) 获取 API Key；默认地址 `https://integrate.api.nvidia.com/v1`，可在设置中按需添加 `build.nvidia.com` 上的模型 ID，用于 **AI 文本节点** 与 **分镜脚本节点** |
 | **通用 OpenAI 接口**     | 支持任何兼容 OpenAI 格式的第三方接口                                                            |
 
 ***
