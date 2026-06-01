@@ -1,0 +1,102 @@
+import { normalizeImageToolbarLayout } from "../../modules/imageToolbarLayoutMemory.js";
+import { normalizeVideoToolbarLayout } from "../../modules/videoToolbarLayoutMemory.js";
+export function createInitialWorkflowDraftState() {
+  return { name: "", cover: "", tags: [], note: "", selectedCoverId: null };
+}
+export function createInitialWorkflowUiState() {
+  return {
+    panelOpen: false,
+    panelPinned: false,
+    searchKeyword: "",
+    detailWorkflowId: null,
+    hoverWorkflowId: null,
+    modalOpen: false,
+    modalTab: "create",
+    sourceGroupId: null,
+    draft: createInitialWorkflowDraftState(),
+    tagDraft: "",
+    updateTargetId: null,
+    updateSearchKeyword: "",
+    updateConfirmOpen: false,
+    saving: false,
+    applyingWorkflowId: null,
+    error: null,
+  };
+}
+export function createInitialState() {
+  return {
+    viewport: { x: 0, y: 0, zoom: 1.1 },
+    isServerConnected: true,
+    nodes: {},
+    _nodeCount: 0,
+    _persistRev: 0,
+    _edgesRev: 0,
+    _parentToChildren: {},
+    edges: {},
+    picker: { visible: false, x: 0, y: 0, screenX: 0, screenY: 0 },
+    selectionBox: { active: false, x1: 0, y1: 0, x2: 0, y2: 0 },
+    selectionMeta: { source: null },
+    selectedNodeIds: [],
+    contextMenu: { visible: false, x: 0, y: 0, items: [] },
+    connOverlay: { srcId: null, invalidNodeIds: [], hoverId: null, side: null },
+    pickConnectMode: {
+      active: false,
+      sourceNodeId: null,
+      handleDirection: null,
+    },
+    annotate: {
+      active: false,
+      nodeId: null,
+      tool: "brush",
+      color: "red",
+      brushSizePx: 40,
+    },
+    matting: {
+      active: false,
+      nodeId: null,
+      tool: "brush",
+      color: "red",
+      brushSizePx: 40,
+    },
+    videoKeying: {
+      active: false,
+      nodeId: null,
+      pos_points: [],
+      neg_points: [],
+    },
+    videoClip: { active: false, nodeId: null },
+    theme: "dark",
+    ui: {
+      showVideoMeta: false,
+      titleFollowsCanvasZoom: false,
+      promptBoxResizeEnabled: true,
+      imageVideoNodeResizeEnabled: false,
+      imageToolbarLayout: normalizeImageToolbarLayout(),
+      videoToolbarLayout: normalizeVideoToolbarLayout(),
+      selectionRelatedHighlightEnabled: true,
+      selectionRelatedHighlightColor: "white",
+      connectionLinesVisible: true,
+      alignFeatureEnabled: true,
+      alignFeatureTriggerMode: "click",
+      alignDistributeGap: 40,
+      alignPanelVisible: false,
+      alignPanelAnchorWorld: null,
+      snapGuidesEnabled: true,
+      featureSelections: {},
+    },
+    subscription: {
+      loading: false,
+      status: "none",
+      expiresAt: null,
+      entitledModelIds: [],
+      error: null,
+      lastSyncAt: 0,
+      contactText: "联系管理员获取授权码",
+      contactUrl: "https://api.ashuoai.com/static/contact/wechat.png",
+      contactWechat: "yumengashuo",
+    },
+    assets: [],
+    workflows: { items: [], loading: false, error: null, loadedAt: 0 },
+    workflowUi: createInitialWorkflowUiState(),
+  };
+}

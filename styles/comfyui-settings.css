@@ -1,0 +1,267 @@
+.comfyui-settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.comfyui-sidebar,
+.comfyui-editor,
+.comfyui-preview-panel {
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  background: var(--soft, rgba(255, 255, 255, 0.03));
+  padding: 12px;
+}
+
+.comfyui-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.comfyui-instance-row,
+.comfyui-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.comfyui-instance-index {
+  width: 18px;
+  text-align: center;
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+.comfyui-instance-input {
+  flex: 1;
+}
+
+.comfyui-workflow-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  padding: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.comfyui-workflow-card.active,
+.comfyui-workflow-card:hover {
+  border-color: var(--accent, #6ea8fe);
+  background: rgba(110, 168, 254, 0.08);
+}
+
+.comfyui-workflow-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.comfyui-workflow-meta,
+.comfyui-field-node,
+.comfyui-node-id {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.comfyui-node-block {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.comfyui-node-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.comfyui-field-expose {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.comfyui-field-name,
+.comfyui-field-type {
+  flex: 1;
+}
+
+.comfyui-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.comfyui-status {
+  min-height: 18px;
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 8px;
+}
+
+.comfyui-preview-panel .comfy-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.comfyui-preview-panel .comfy-field-item {
+  min-width: 140px;
+}
+
+.comfy-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.comfy-field-input,
+.comfy-pill-input {
+  min-height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  padding: 4px 8px;
+}
+
+.comfy-field-bool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.comfyui-test-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.comfyui-test-thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.comfy-fields-empty {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.comfy-node-fields-slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+
+.comfy-node-fields-slot .comfy-fields-row--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.comfy-node-fields-slot .comfy-field-item--compact {
+  min-width: 0;
+}
+
+.comfy-node-fields-slot .comfy-field-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.comfy-node-fields-slot .comfy-field-inline-label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+  opacity: 0.72;
+  white-space: nowrap;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comfy-node-fields-slot .comfy-field-input--compact {
+  width: 52px;
+  min-width: 40px;
+  max-width: 72px;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.comfy-node-fields-slot .comfy-field-input--compact:focus {
+  outline: none;
+}
+
+.comfy-node-fields-slot .comfy-field-inline-bool .comfy-field-input--compact {
+  width: auto;
+}
+
+.prompt-panel-footer .img-model-wrap .img-model-label {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-panel-footer .comfy-node-fields-slot {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.prompt-panel-footer .img-model-wrap.hidden,
+.prompt-panel-footer .ui-schema-placement.hidden,
+.prompt-panel-footer .rh-adv-wrap.hidden,
+.prompt-panel-footer .rh-adv-panel.hidden {
+  display: none !important;
+}
+
+.text-prompt-panel.is-storyboard-image-mode .img-model-wrap > .node-model-menu,
+.text-prompt-panel.is-storyboard-image-mode
+  .node-model-menu.is-storyboard-text-menu-hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.text-prompt-panel.is-storyboard-image-mode
+  .img-model-wrap
+  > .storyboard-image-model-menu {
+  display: block;
+}
+
+@media (max-width: 1100px) {
+  .comfyui-settings-layout {
+    grid-template-columns: 1fr;
+  }
+}

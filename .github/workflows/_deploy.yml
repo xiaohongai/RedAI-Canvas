@@ -1,0 +1,298 @@
+name: 极致纯净：双端打包与全平台发版 (版本号AI探测版)
+
+on:
+  workflow_dispatch:
+
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  # ==========================================
+  # 🕵️‍♂️ 侦察兵任务：提前读取版本号并决定后续策略
+  # ==========================================
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      is_new: ${{ steps.scanner.outputs.is_new }}
+      app_version: ${{ steps.scanner.outputs.app_version }}
+    steps:
+      - name: 拉取源码
+        uses: actions/checkout@v3
+
+      - name: 🔍 扫描版本号并对比 GitHub Releases
+        id: scanner
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # 从 index.html 精准提取版本号
+          VERSION=$(grep 'name="app-version"' index.html | grep -o 'content="[^"]*"' | cut -d'"' -f2)
+          if [ -z "$VERSION" ]; then VERSION="V_unknown"; fi
+          echo "探测到本地版本号: $VERSION"
+          echo "app_version=$VERSION" >> $GITHUB_OUTPUT
+
+          # 核心判断逻辑：对比线上 Release 是否存在
+          if gh release view "$VERSION" --repo xiaohongai/RedAI-Canvas &> /dev/null; then
+            echo "🚨 版本 $VERSION 已存在！策略：仅混淆并同步代码，跳过发版。"
+            echo "is_new=false" >> $GITHUB_OUTPUT
+          else
+            echo "🚀 版本 $VERSION 是全新的！策略：火力全开，执行双端打包发版！"
+            echo "is_new=true" >> $GITHUB_OUTPUT
+          fi
+
+  # ==========================================
+  # 🏭 主力工厂：根据侦察兵的指令执行具体任务
+  # ==========================================
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run architecture guard
+        run: npm run check:architecture
+
+      - name: Run encoding guard
+        run: npm run check:encoding
+
+      - name: Run critical tests
+        run: npm run test:critical
+
+      - name: Run storyboard tests
+        run: npm run test:storyboard
+
+      - name: Run e2e smoke
+        run: npm run test:e2e:smoke
+
+  build-and-deploy:
+    needs:
+      - check-version
+      - quality-gates
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: Windows
+          - os: macos-latest
+            target: Mac-Intel
+            mac_arch: x86_64
+          - os: macos-latest
+            target: Mac-ARM
+            mac_arch: aarch64
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: 1. 全盘拉取明文源码
+        # 🚨 智能判断：Windows 永远干活；Mac 只有在是新版本时才起床
+        if: matrix.target == 'Windows' || needs.check-version.outputs.is_new == 'true'
+        uses: actions/checkout@v3
+
+      - name: 2. 搭建 Node.js 前端混淆环境
+        if: matrix.target == 'Windows' || needs.check-version.outputs.is_new == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 3. 安装前端混淆与压缩武器库
+        if: matrix.target == 'Windows' || needs.check-version.outputs.is_new == 'true'
+        run: npm install -g javascript-obfuscator html-minifier clean-css-cli
+
+      - name: 4. 📂 归集项目文件到 dist
+        if: matrix.target == 'Windows' || needs.check-version.outputs.is_new == 'true'
+        run: |
+          mkdir -p dist
+          # 先处理 docs/index.html（单独处理）
+          if [ -f "docs/index.html" ]; then
+            mkdir -p dist/docs
+            cp docs/index.html dist/docs/
+          fi
+          # 常规文件复制（排除 docs 目录）
+          find . -maxdepth 1 -mindepth 1 \
+            ! -name "dist" ! -name ".git" ! -name ".github" \
+            ! -name "tests" ! -name "e2e" ! -name "tools" \
+            ! -name ".husky" ! -name "docs" \
+            ! -name "user" ! -name "output" ! -name "data" \
+            ! -name "白皮书.md" ! -name ".dev" ! -name ".Advanced" ! -name "dev" \
+            -exec cp -r {} dist/ \;
+
+          mkdir -p dist/output
+          cp -r output/gen_*.png dist/output/ 2>/dev/null || true
+          mkdir -p "dist/user/Canvas Project"
+          cp "user/Canvas Project/短剧测试流程.json" "dist/user/Canvas Project/" 2>/dev/null || true
+
+      - name: 5. 🎨 前端逻辑粉碎与极限压缩 (保留 Python 明文)
+        if: matrix.target == 'Windows' || needs.check-version.outputs.is_new == 'true'
+        run: |
+          echo "🧠 混淆 JavaScript..."
+          javascript-obfuscator ./dist --output ./dist --seed 20260426
+
+          echo "🎨 极限压缩 CSS..."
+          find ./dist -name "*.css" -exec cleancss -o {} {} \;
+
+          echo "📝 极限压缩 HTML..."
+          find ./dist -name "*.html" -exec html-minifier --collapse-whitespace --remove-comments --minify-css true --minify-js true -o {} {} \;
+
+      - name: 6. 增量同步混淆代码到双端 (仅 Windows 执行)
+        if: matrix.target == 'Windows'
+        run: |
+          sync_obfuscated_repo() {
+            local repo_url="$1"
+            local repo_name="$2"
+            local workdir="publish-${repo_name}"
+
+            rm -rf "$workdir"
+            if ! git clone --depth 1 --branch main "$repo_url" "$workdir"; then
+              echo "${repo_name} 拉取失败，跳过同步"
+              return 0
+            fi
+
+            git -C "$workdir" config user.name "Actions-Bot"
+            git -C "$workdir" config user.email "bot@noreply.github.com"
+
+            find "$workdir" -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+            cp -a dist/. "$workdir"/
+
+            git -C "$workdir" add -A
+            if git -C "$workdir" diff --cached --quiet; then
+              echo "${repo_name} 没有产物变化，跳过提交"
+              return 0
+            fi
+
+            git -C "$workdir" commit -m "自动同步混淆代码 (版本: ${{ needs.check-version.outputs.app_version }}) [skip ci]"
+            git -C "$workdir" push origin HEAD:main || echo "${repo_name} 推送失败，继续执行"
+          }
+
+          sync_obfuscated_repo "https://ashuoai:${{ secrets.GITEE_PAT }}@gitee.com/xiaohongai/RedAI-Canvas.git" "gitee"
+
+      - name: 7. 🤖 接收侦察兵的版本号
+        if: needs.check-version.outputs.is_new == 'true'
+        run: echo "APP_VERSION=${{ needs.check-version.outputs.app_version }}" >> $GITHUB_ENV
+
+      - name: 8.1 🐍 组装 Python 环境 (💻 Windows 路线)
+        if: matrix.target == 'Windows' && needs.check-version.outputs.is_new == 'true'
+        run: |
+          cd dist
+          PYTHON_URL="https://www.python.org/ftp/python/3.14.3/python-3.14.3-embed-amd64.zip" 
+          curl -L -o python_env.zip $PYTHON_URL
+          unzip -q python_env.zip -d venv
+          rm python_env.zip
+          sed -i 's/#import site/import site/g' venv/python*._pth
+          curl -L -o get-pip.py https://bootstrap.pypa.io/get-pip.py
+          ./venv/python.exe get-pip.py
+          rm get-pip.py
+          ./venv/python.exe -m pip install -r requirements.txt
+
+      - name: 8.2 🍏 组装 Python 环境 (🍎 Mac 路线)
+        if: matrix.target != 'Windows' && needs.check-version.outputs.is_new == 'true'
+        run: |
+          cd dist
+          MAC_PYTHON_URL="https://github.com/indygreg/python-build-standalone/releases/download/20240224/cpython-3.11.8+20240224-${{ matrix.mac_arch }}-apple-darwin-install_only.tar.gz"
+          curl -L -o mac_python.tar.gz $MAC_PYTHON_URL
+          tar -xzf mac_python.tar.gz
+          mv python venv
+          rm mac_python.tar.gz
+          ./venv/bin/python3 -m pip install -r requirements.txt
+
+          echo "📝 生成 Mac 专属的一键启动脚本..."
+          echo '#!/bin/bash' > 双击启动.command
+          echo 'cd "$(dirname "$0")"' >> 双击启动.command
+          echo './venv/bin/python3 server.py' >> 双击启动.command
+          chmod +x 双击启动.command
+
+          echo "🧹 清理跨平台残留物..."
+          rm -f *.bat
+
+      - name: 9. 📦 终极封箱打包 (带 Git 环境支持热更新版)
+        if: needs.check-version.outputs.is_new == 'true'
+        run: |
+          cd dist
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            7z a ../RedAI-Canvas-${{ matrix.target }}-${{ env.APP_VERSION }}.zip ./* .[a-zA-Z0-9]*
+          else
+            zip -q -r ../RedAI-Canvas-${{ matrix.target }}-${{ env.APP_VERSION }}.zip ./* .[a-zA-Z0-9]*
+          fi
+          echo "打包完成：RedAI-Canvas-${{ matrix.target }}-${{ env.APP_VERSION }}.zip"
+
+      - name: 10. 🚀 全自动上架到 GitHub Releases
+        if: needs.check-version.outputs.is_new == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -f "release_notes.txt" ]; then
+            NOTES_CONTENT=$(awk '/^---/{exit} {print}' release_notes.txt | grep -v -E '^\[previewVideoUrl\][[:space:]]*:')
+          else
+            NOTES_CONTENT="本次更新未提供详细说明，请享受最新版本！"
+          fi
+
+          ASSETS=(./RedAI-Canvas-${{ matrix.target }}-${{ env.APP_VERSION }}.zip)
+
+          if [ "${{ matrix.target }}" = "Windows" ]; then
+            node <<'NODE'
+          const fs = require("fs");
+
+          const version = process.env.APP_VERSION || "V_unknown";
+          const notesSource = fs.existsSync("release_notes.txt")
+            ? fs.readFileSync("release_notes.txt", "utf8")
+            : "本次更新未提供详细说明，请享受最新版本！";
+          const firstBlock = notesSource.split(/^---\s*$/m)[0];
+          const previewVideoMatch = firstBlock.match(/^\[previewVideoUrl\]\s*:\s*(\S+)/im);
+          const notes = firstBlock
+            .replace(/^\[previewVideoUrl\]\s*:\s*\S+\s*$/gim, "")
+            .trim()
+            || "本次更新未提供详细说明，请享受最新版本！";
+          const previewVideoUrl = previewVideoMatch ? previewVideoMatch[1].trim() : "";
+          const releaseBase = `https://github.com/xiaohongai/RedAI-Canvas/releases/download/${version}`;
+
+          const manifest = {
+            version,
+            pub_date: new Date().toISOString(),
+            notes,
+            release_url: `https://github.com/xiaohongai/RedAI-Canvas/releases/tag/${version}`,
+            platforms: {
+              "windows-x64": {
+                url: `${releaseBase}/RedAI-Canvas-Windows-${version}.zip`,
+              },
+              "darwin-x64": {
+                url: `${releaseBase}/RedAI-Canvas-Mac-Intel-${version}.zip`,
+              },
+              "darwin-aarch64": {
+                url: `${releaseBase}/RedAI-Canvas-Mac-ARM-${version}.zip`,
+              },
+            },
+            git: {
+              branch: "main",
+              commit: process.env.GITHUB_SHA || "",
+            },
+          };
+          if (previewVideoUrl) {
+            manifest.previewVideoUrl = previewVideoUrl;
+          }
+
+          fs.writeFileSync("latest.json", `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+          NODE
+            ASSETS+=(./latest.json)
+          fi
+
+          gh release create ${{ env.APP_VERSION }} "${ASSETS[@]}" \
+            --repo xiaohongai/RedAI-Canvas \
+            --title "🚀 RedAI-Canvas ${{ env.APP_VERSION }}" \
+            --notes "$NOTES_CONTENT" \
+            || gh release upload ${{ env.APP_VERSION }} "${ASSETS[@]}" \
+            --repo xiaohongai/RedAI-Canvas \
+            --clobber

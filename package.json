@@ -1,0 +1,13 @@
+{
+  "name": "red-ai-canvas",
+  "private": true,
+  "version": "0.4.5",
+  "description": "RedAI-Canvas desktop editor",
+  "author": "xiaohongai",
+  "type": "module",
+  "main": "electron/main.js",
+  "dependencies": {
+    "electron-updater": "^6.8.3",
+    "yazl": "^3.3.1"
+  }
+}
